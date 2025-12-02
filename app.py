@@ -144,35 +144,18 @@ def render_job_description_section():
     
     with tab2:
         job_file = st.file_uploader(
-def process_resumes():
-    """Process uploaded resumes against job description."""
-    uploaded_files = st.session_state.get('uploaded_files', [])
-    resume_text = st.session_state.get('resume_text', None)
-    job_description = st.session_state.job_description
-    
-    # Validate inputs - must have either uploaded files or resume text
-    if not uploaded_files and not resume_text:
-        st.error("❌ Please upload PDF resumes or paste resume text.")
-        return
-    
-    # Prepare resume data
-    if resume_text:
-    # Validate PDFs (only if we have files)
-    if pdf_bytes_list:
-        pdf_validation = validate_pdf_files(pdf_bytes_list)
-        if not pdf_validation.is_valid:
-            st.error(f"❌ {pdf_validation.error_message}")
-            return
-    elif resume_text:
-        # For text mode, create a simple validation
-        if len(resume_text.strip()) < 50:
-            st.error("❌ Resume text is too short. Please provide a complete resume.")
-            return
-        # Convert text to bytes for processing (wrap in a simple structure)
-        pdf_bytes_list = [resume_text.encode('utf-8')]
-        # Read file bytes
-        pdf_bytes_list = [f.read() for f in uploaded_files]
-        st.session_state.resume_text_mode = Falseb_file.read())
+            "Upload job description file",
+            type=['pdf', 'txt', 'docx'],
+            help="Upload job description as PDF, TXT, or DOCX file",
+            key="job_desc_file"
+        )
+        
+        if job_file:
+            # Read file content based on type
+            try:
+                if job_file.type == "application/pdf":
+                    from src.utils.pdf_extractor import extract_text_from_pdf
+                    job_text = extract_text_from_pdf(job_file.read())
                 elif job_file.type == "text/plain":
                     job_text = job_file.read().decode('utf-8')
                 elif job_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
@@ -198,6 +181,43 @@ def process_resumes():
         else:
             if 'job_description' not in st.session_state or not st.session_state.job_description:
                 st.session_state.job_file = None
+
+
+def process_resumes():
+    """Process uploaded resumes against job description."""
+    uploaded_files = st.session_state.get('uploaded_files', [])
+    resume_text = st.session_state.get('resume_text', None)
+    job_description = st.session_state.job_description
+    
+    # Validate inputs - must have either uploaded files or resume text
+    if not uploaded_files and not resume_text:
+        st.error("❌ Please upload PDF resumes or paste resume text.")
+        return
+    
+    # Prepare resume data
+    if resume_text:
+        # Create a temporary PDF-like structure from text
+        # For text input, we'll process it directly
+        pdf_bytes_list = []
+        st.session_state.resume_text_mode = True
+    else:
+        # Read file bytes
+        pdf_bytes_list = [f.read() for f in uploaded_files]
+        st.session_state.resume_text_mode = False
+    
+    # Validate PDFs (only if we have files)
+    if pdf_bytes_list:
+        pdf_validation = validate_pdf_files(pdf_bytes_list)
+        if not pdf_validation.is_valid:
+            st.error(f"❌ {pdf_validation.error_message}")
+            return
+    elif resume_text:
+        # For text mode, create a simple validation
+        if len(resume_text.strip()) < 50:
+            st.error("❌ Resume text is too short. Please provide a complete resume.")
+            return
+        # Convert text to bytes for processing (wrap in a simple structure)
+        pdf_bytes_list = [resume_text.encode('utf-8')]
 
 
 def render_screen_button():
