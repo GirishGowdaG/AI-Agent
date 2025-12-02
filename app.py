@@ -121,28 +121,10 @@ def render_job_description_section():
     """Render the job description input section."""
     st.header("📝 Job Description")
     
-    # Tab for text input or file upload
-    tab1, tab2 = st.tabs(["✍️ Paste Text", "📄 Upload File"])
+    # Tab for file upload or text input (Upload File is default/first)
+    tab1, tab2 = st.tabs(["📄 Upload File", "✍️ Paste Text"])
     
     with tab1:
-        job_description = st.text_area(
-            "Enter the job description",
-            value=st.session_state.get('job_description', ''),
-            height=300,
-            max_chars=MAX_JOB_DESCRIPTION_LENGTH,
-            help="Paste the full job description here",
-            key="job_desc_text"
-        )
-        
-        if job_description:
-            st.session_state.job_description = job_description
-            st.session_state.job_file = None
-            st.caption(f"📊 {len(job_description)} / {MAX_JOB_DESCRIPTION_LENGTH} characters")
-        else:
-            if 'job_file' not in st.session_state or not st.session_state.job_file:
-                st.session_state.job_description = ""
-    
-    with tab2:
         job_file = st.file_uploader(
             "Upload job description file",
             type=['pdf', 'txt', 'docx'],
@@ -181,6 +163,24 @@ def render_job_description_section():
         else:
             if 'job_description' not in st.session_state or not st.session_state.job_description:
                 st.session_state.job_file = None
+    
+    with tab2:
+        job_description = st.text_area(
+            "Enter the job description",
+            value=st.session_state.get('job_description', ''),
+            height=300,
+            max_chars=MAX_JOB_DESCRIPTION_LENGTH,
+            help="Paste the full job description here",
+            key="job_desc_text"
+        )
+        
+        if job_description:
+            st.session_state.job_description = job_description
+            st.session_state.job_file = None
+            st.caption(f"📊 {len(job_description)} / {MAX_JOB_DESCRIPTION_LENGTH} characters")
+        else:
+            if 'job_file' not in st.session_state or not st.session_state.job_file:
+                st.session_state.job_description = ""
 
 
 def process_resumes():
