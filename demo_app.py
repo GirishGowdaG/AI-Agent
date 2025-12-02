@@ -433,11 +433,13 @@ def render_score_chart(results):
             y=1.02,
             xanchor="right",
             x=1
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(128,128,128,0.2)'
         )
     )
-    
-    # Add grid
-    fig.update_yaxis(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
     
     st.plotly_chart(fig, use_container_width=True)
 
