@@ -385,19 +385,68 @@ def render_results_table(results):
 
 
 def render_score_chart(results):
-    """Render match score bar chart."""
+    """Render match score bar chart with enhanced design."""
     import pandas as pd
+    import plotly.graph_objects as go
     
-    chart_data = pd.DataFrame({
-        'Candidate': [r.name for r in results],
-        'Overall Score': [r.overall_score for r in results]
-    })
+    # Prepare data
+    names = [r.name for r in results]
+    overall_scores = [r.overall_score for r in results]
+    skills_scores = [r.skills_score for r in results]
+    experience_scores = [r.experience_score for r in results]
+    education_scores = [r.education_score for r in results]
     
-    st.bar_chart(chart_data.set_index('Candidate'))
+    # Create grouped bar chart
+    fig = go.Figure(data=[
+        go.Bar(name='Overall Score', x=names, y=overall_scores, 
+               marker_color='rgb(55, 83, 109)',
+               text=[f'{s:.1f}%' for s in overall_scores],
+               textposition='auto'),
+        go.Bar(name='Skills', x=names, y=skills_scores, 
+               marker_color='rgb(26, 118, 255)',
+               text=[f'{s:.1f}%' for s in skills_scores],
+               textposition='auto'),
+        go.Bar(name='Experience', x=names, y=experience_scores, 
+               marker_color='rgb(50, 171, 96)',
+               text=[f'{s:.1f}%' for s in experience_scores],
+               textposition='auto'),
+        go.Bar(name='Education', x=names, y=education_scores, 
+               marker_color='rgb(219, 64, 82)',
+               text=[f'{s:.1f}%' for s in education_scores],
+               textposition='auto'),
+    ])
+    
+    # Update layout
+    fig.update_layout(
+        title='Candidate Scores Comparison',
+        xaxis_title='Candidates',
+        yaxis_title='Score (%)',
+        barmode='group',
+        height=500,
+        hovermode='x unified',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(size=12),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    # Add grid
+    fig.update_yaxis(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
+    
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def render_skill_summary(results):
-    """Render skill overlap summary."""
+    """Render skill overlap summary with enhanced visualization."""
+    import plotly.graph_objects as go
+    from collections import Counter
+    
     # Aggregate skills
     all_matched = []
     all_gaps = []
@@ -410,22 +459,72 @@ def render_skill_summary(results):
     with col1:
         st.markdown("**Most Common Matched Skills:**")
         if all_matched:
-            from collections import Counter
             matched_counts = Counter(all_matched).most_common(5)
-            for skill, count in matched_counts:
-                st.write(f"- {skill}: {count} candidates")
+            skills = [skill for skill, _ in matched_counts]
+            counts = [count for _, count in matched_counts]
+            
+            # Create horizontal bar chart
+            fig = go.Figure(go.Bar(
+                x=counts,
+                y=skills,
+                orientation='h',
+                marker=dict(
+                    color=counts,
+                    colorscale='Greens',
+                    showscale=False
+                ),
+                text=counts,
+                textposition='auto',
+            ))
+            
+            fig.update_layout(
+                height=300,
+                margin=dict(l=0, r=0, t=20, b=0),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                xaxis_title='Number of Candidates',
+                yaxis_title='',
+                font=dict(size=11)
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            st.write("No matched skills")
+            st.info("No matched skills found")
     
     with col2:
         st.markdown("**Most Common Skill Gaps:**")
         if all_gaps:
-            from collections import Counter
             gap_counts = Counter(all_gaps).most_common(5)
-            for skill, count in gap_counts:
-                st.write(f"- {skill}: {count} candidates")
+            skills = [skill for skill, _ in gap_counts]
+            counts = [count for _, count in gap_counts]
+            
+            # Create horizontal bar chart
+            fig = go.Figure(go.Bar(
+                x=counts,
+                y=skills,
+                orientation='h',
+                marker=dict(
+                    color=counts,
+                    colorscale='Reds',
+                    showscale=False
+                ),
+                text=counts,
+                textposition='auto',
+            ))
+            
+            fig.update_layout(
+                height=300,
+                margin=dict(l=0, r=0, t=20, b=0),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                xaxis_title='Number of Candidates',
+                yaxis_title='',
+                font=dict(size=11)
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            st.write("No skill gaps")
+            st.info("No skill gaps found")
 
 
 def render_export_buttons(results):
