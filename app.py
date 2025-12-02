@@ -26,6 +26,12 @@ if 'processing' not in st.session_state:
     st.session_state.processing = False
 if 'status' not in st.session_state:
     st.session_state.status = None
+if 'uploaded_files' not in st.session_state:
+    st.session_state.uploaded_files = []
+if 'resume_text' not in st.session_state:
+    st.session_state.resume_text = None
+if 'job_file' not in st.session_state:
+    st.session_state.job_file = None
 
 
 def main():
@@ -44,6 +50,9 @@ def main():
             st.session_state.job_description = ""
             st.session_state.processing = False
             st.session_state.status = None
+            st.session_state.uploaded_files = []
+            st.session_state.resume_text = None
+            st.session_state.job_file = None
             st.rerun()
     
     # Main content
@@ -71,38 +80,124 @@ def render_upload_section():
     """Render the file upload section."""
     st.header("📁 Upload Resumes")
     
-    uploaded_files = st.file_uploader(
-        "Upload PDF resumes",
-        type=['pdf'],
-        accept_multiple_files=True,
-        help=f"Upload up to {MAX_PDF_FILES} PDF files"
-    )
+    # Tab for file upload or text input
+    tab1, tab2 = st.tabs(["📄 Upload PDF Files", "✍️ Paste Resume Text"])
     
-    if uploaded_files:
-        st.success(f"✅ {len(uploaded_files)} file(s) uploaded")
+    with tab1:
+        uploaded_files = st.file_uploader(
+            "Upload PDF resumes",
+            type=['pdf'],
+            accept_multiple_files=True,
+            help=f"Upload up to {MAX_PDF_FILES} PDF files",
+            key="resume_files"
+        )
         
-        # Store in session state
-        st.session_state.uploaded_files = uploaded_files
-    else:
-        st.session_state.uploaded_files = []
+        if uploaded_files:
+            st.success(f"✅ {len(uploaded_files)} file(s) uploaded")
+            st.session_state.uploaded_files = uploaded_files
+            st.session_state.resume_text = None
+        else:
+            if 'resume_text' not in st.session_state or not st.session_state.resume_text:
+                st.session_state.uploaded_files = []
+    
+    with tab2:
+        resume_text = st.text_area(
+            "Paste resume text here",
+            height=300,
+            help="Enter the full resume text",
+            key="resume_text_input"
+        )
+        
+        if resume_text:
+            st.success(f"✅ Resume text entered ({len(resume_text)} characters)")
+            st.session_state.resume_text = resume_text
+            st.session_state.uploaded_files = []
+        else:
+            if 'uploaded_files' not in st.session_state or not st.session_state.uploaded_files:
+                st.session_state.resume_text = None
 
 
 def render_job_description_section():
     """Render the job description input section."""
     st.header("📝 Job Description")
     
-    job_description = st.text_area(
-        "Enter the job description",
-        value=st.session_state.job_description,
-        height=300,
-        max_chars=MAX_JOB_DESCRIPTION_LENGTH,
-        help="Paste the full job description here"
-    )
+    # Tab for text input or file upload
+    tab1, tab2 = st.tabs(["✍️ Paste Text", "📄 Upload File"])
     
-    st.session_state.job_description = job_description
+    with tab1:
+        job_description = st.text_area(
+            "Enter the job description",
+            value=st.session_state.get('job_description', ''),
+            height=300,
+            max_chars=MAX_JOB_DESCRIPTION_LENGTH,
+            help="Paste the full job description here",
+            key="job_desc_text"
+        )
+        
+        if job_description:
+            st.session_state.job_description = job_description
+            st.session_state.job_file = None
+            st.caption(f"📊 {len(job_description)} / {MAX_JOB_DESCRIPTION_LENGTH} characters")
+        else:
+            if 'job_file' not in st.session_state or not st.session_state.job_file:
+                st.session_state.job_description = ""
     
-    if job_description:
-        st.caption(f"📊 {len(job_description)} / {MAX_JOB_DESCRIPTION_LENGTH} characters")
+    with tab2:
+        job_file = st.file_uploader(
+def process_resumes():
+    """Process uploaded resumes against job description."""
+    uploaded_files = st.session_state.get('uploaded_files', [])
+    resume_text = st.session_state.get('resume_text', None)
+    job_description = st.session_state.job_description
+    
+    # Validate inputs - must have either uploaded files or resume text
+    if not uploaded_files and not resume_text:
+        st.error("❌ Please upload PDF resumes or paste resume text.")
+        return
+    
+    # Prepare resume data
+    if resume_text:
+    # Validate PDFs (only if we have files)
+    if pdf_bytes_list:
+        pdf_validation = validate_pdf_files(pdf_bytes_list)
+        if not pdf_validation.is_valid:
+            st.error(f"❌ {pdf_validation.error_message}")
+            return
+    elif resume_text:
+        # For text mode, create a simple validation
+        if len(resume_text.strip()) < 50:
+            st.error("❌ Resume text is too short. Please provide a complete resume.")
+            return
+        # Convert text to bytes for processing (wrap in a simple structure)
+        pdf_bytes_list = [resume_text.encode('utf-8')]
+        # Read file bytes
+        pdf_bytes_list = [f.read() for f in uploaded_files]
+        st.session_state.resume_text_mode = Falseb_file.read())
+                elif job_file.type == "text/plain":
+                    job_text = job_file.read().decode('utf-8')
+                elif job_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    # Handle DOCX files
+                    try:
+                        import docx
+                        doc = docx.Document(job_file)
+                        job_text = "\n".join([para.text for para in doc.paragraphs])
+                    except ImportError:
+                        st.warning("⚠️ python-docx not installed. Install it to read DOCX files.")
+                        job_text = ""
+                else:
+                    job_text = job_file.read().decode('utf-8')
+                
+                if job_text:
+                    st.session_state.job_description = job_text[:MAX_JOB_DESCRIPTION_LENGTH]
+                    st.session_state.job_file = job_file
+                    st.success(f"✅ Job description loaded ({len(st.session_state.job_description)} characters)")
+                    if len(job_text) > MAX_JOB_DESCRIPTION_LENGTH:
+                        st.warning(f"⚠️ Content truncated to {MAX_JOB_DESCRIPTION_LENGTH} characters")
+            except Exception as e:
+                st.error(f"❌ Error reading file: {str(e)}")
+        else:
+            if 'job_description' not in st.session_state or not st.session_state.job_description:
+                st.session_state.job_file = None
 
 
 def render_screen_button():
