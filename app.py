@@ -136,8 +136,12 @@ def render_job_description_section():
             # Read file content based on type
             try:
                 if job_file.type == "application/pdf":
-                    from src.utils.pdf_extractor import extract_text_from_pdf
-                    job_text = extract_text_from_pdf(job_file.read())
+                    from src.utils.pdf_extractor import PDFExtractor
+                    extractor = PDFExtractor()
+                    job_text, error = extractor.extract_text(job_file.read())
+                    if error:
+                        st.error(f"❌ {error}")
+                        job_text = ""
                 elif job_file.type == "text/plain":
                     job_text = job_file.read().decode('utf-8')
                 elif job_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
