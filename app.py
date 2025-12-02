@@ -362,7 +362,7 @@ def render_results_table(results):
     # Expandable details
     st.subheader("📋 Detailed Analysis")
     for r in results:
-        with st.expander(f"#{r.rank} - {r.name} ({r.overall_score:.1f}%)"):
+        with st.expander(f"#{r.rank} - {r.name} ({r.overall_score:.1f}%)", expanded=True):
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown("**Scores:**")
