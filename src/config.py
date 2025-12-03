@@ -25,7 +25,7 @@ AGENT_PROCESSING_TIMEOUT = 30
 
 
 # Hardcoded API key (for development)
-_HARDCODED_API_KEY = "AIzaSyDOE3xfmnCBYJS26zcD8f6vM_RGJZIE7as"
+_HARDCODED_API_KEY = "AIzaSyBWl-Fw5jtuugEuddK0xkE6WWQ30P8fDYM"
 
 
 def get_gemini_api_key() -> Optional[str]:
